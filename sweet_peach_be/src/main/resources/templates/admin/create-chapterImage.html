@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Chapter Image</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    function CreateChapterImage({ chapterId }) {
+        const [selectedImage, setSelectedImage] = React.useState(null);
+
+        const handleImageChange = (e) => {
+            const file = e.target.files[0];
+            const imageUrl = URL.createObjectURL(file);
+            setSelectedImage(imageUrl);
+        };
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('file', e.target.image.files[0]);
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/chapterImages/create/${chapterId}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                alert('Image uploaded successfully!');
+                window.location.href = `chapter-images.html?chapterId=${chapterId}`;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image');
+            }
+        };
+
+        return (
+            <div className="container">
+                <div className="header">
+                    <h1>Create Chapter Image</h1>
+                </div>
+                <div className="content">
+                    <div className="form-container">
+                        <form encType="multipart/form-data" onSubmit={handleSubmit}>
+                            <div>
+                                <label htmlFor="image">Choose Image:</label>
+                                <br/>
+                                <input
+                                    type="file"
+                                    id="image"
+                                    name="image"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    required
+                                />
+                            </div>
+                            <br/>
+                            {selectedImage && (
+                                <img className="preview-image" src={selectedImage} alt="Selected Image" />
+                            )}
+                            <div>
+                                <button type="submit">Upload Image</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Get the chapterId from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterId = urlParams.get('chapterId');
+
+    ReactDOM.render(
+        <div>
+            <Menu />
+            <CreateChapterImage chapterId={chapterId} />
+        </div>
+
+        , document.getElementById('root'));
+</script>
+</body>
+</html>

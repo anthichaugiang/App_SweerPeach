@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Genre</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.14.5/babel.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    const EditGenre = () => {
+        const [genreName, setGenreName] = React.useState('');
+
+        const handleSubmit = async (event) => {
+            event.preventDefault();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const genreId = urlParams.get('id');
+
+            const updatedGenreData = { id: genreId, name: genreName };
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/genres/${genreId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedGenreData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to edit genre');
+                }
+
+                alert('Genre updated successfully!');
+                window.location.href = 'genre.html';
+                // Redirect to another page or handle success
+            } catch (error) {
+                console.error('Error editing genre:', error);
+                alert('Failed to edit genre. Please try again.');
+            }
+        };
+
+        React.useEffect(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const genreId = urlParams.get('id');
+
+            // Fetch genre details and update state
+            const fetchGenreDetails = async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/genres/${genreId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch genre details');
+                    }
+                    const genre = await response.json();
+                    setGenreName(genre.name);
+                } catch (error) {
+                    console.error('Error fetching genre details:', error);
+                    alert('Failed to fetch genre details. Please try again.');
+                }
+            };
+
+            fetchGenreDetails();
+        }, []);
+
+        const handleNameChange = (event) => {
+            setGenreName(event.target.value);
+        };
+
+        return (
+            <div className="container">
+                <div className="header">
+                    <h1>Edit Genre</h1>
+                </div>
+                <div className="content">
+                    <div className="form-container">
+                        <form className="edit-genre-form" id="editGenreForm" onSubmit={handleSubmit}>
+                            <label htmlFor="name">New Genre Name:</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={genreName}
+                                onChange={handleNameChange}
+                                required
+                            />
+                            <button type="submit">Edit Genre</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.render(
+        <div>
+            <Menu />
+            <EditGenre />
+        </div>
+
+        , document.getElementById('root'));
+</script>
+
+</body>
+</html>

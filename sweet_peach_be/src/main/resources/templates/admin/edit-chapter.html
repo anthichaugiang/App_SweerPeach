@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Chapter</title>
+    <!-- Add any necessary CSS stylesheets -->
+    <style>
+        /* Add your CSS styles here */
+        /* Optional: Add CSS styles for the form elements */
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Your JavaScript file where you define the EditChapter component -->
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    const { useState, useEffect } = React;
+
+    // Function to get URL parameters
+    const getParamsFromUrl = () => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const params = {};
+
+        for (const [key, value] of searchParams.entries()) {
+            params[key] = value;
+        }
+
+        return params;
+    };
+
+    function EditChapter() {
+        const { comicId, chapterId } = getParamsFromUrl(); // Get comicId and chapterId from URL
+
+        const [chapterNumber, setChapterNumber] = useState('');
+        const [title, setTitle] = useState('');
+
+        useEffect(() => {
+            fetchChapterData(comicId, chapterId);
+        }, [comicId, chapterId]);
+
+        const fetchChapterData = async (comicId, chapterId) => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/chapters/${comicId}/chapters/${chapterId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chapter');
+                }
+                const data = await response.json();
+                setChapterNumber(data.chapterNumber);
+                setTitle(data.title);
+            } catch (error) {
+                console.error('Error fetching chapter:', error);
+            }
+        };
+
+        const handleSubmit = async (event) => {
+            event.preventDefault();
+
+            try {
+                const formData = new FormData();
+                formData.append('chapterNumber', chapterNumber);
+                formData.append('title', title);
+
+                const response = await fetch(`http://localhost:8080/api/chapters/update/${chapterId}`, {
+                    method: 'PUT',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update chapter');
+                }
+
+                window.location.href = `chapter.html?comicId=${comicId}`;
+                alert('Chapter updated successfully!')
+            } catch (error) {
+                console.error('Error updating chapter:', error);
+            }
+        };
+
+        return (
+            <div className="container">
+                <h1>Edit Chapter</h1>
+                <form encType="multipart/form-data" method="POST" onSubmit={handleSubmit}>
+                    <div>
+                        <label htmlFor="chapterNumber">Chapter Number:</label>
+                        <input
+                            type="number"
+                            id="chapterNumber"
+                            value={chapterNumber}
+                            onChange={(e) => setChapterNumber(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="title">Title:</label>
+                        <input
+                            type="text"
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit">Save Changes</button>
+                </form>
+            </div>
+        );
+    }
+
+    ReactDOM.render(<div>
+        <Menu />
+        <EditChapter />
+    </div>
+
+        , document.getElementById('root'));
+</script>
+
+</body>
+</html>

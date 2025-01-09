@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Followed Comics</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    function FollowedComics({ userId }) {
+        const [followedComics, setFollowedComics] = React.useState([]);
+
+        React.useEffect(() => {
+            fetch(`http://localhost:8080/api/user/${userId}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch followed comics');
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (!data || !Array.isArray(data)) {
+                        throw new Error('Invalid data format for followed comics');
+                    }
+                    console.log("Received Followed Comics:", data);
+                    setFollowedComics(data);
+                })
+                .catch((error) => {
+                    console.error('Error fetching followed comics:', error);
+                });
+        }, [userId, setFollowedComics]);
+
+        console.log("Followed Comics State:", followedComics);
+
+        return (
+            <div>
+                <h2>Followed Comics</h2>
+                {followedComics.length > 0 ? (
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Views</th>
+                            <th>Follows</th>
+                            <th>Rating</th>
+                            <th>Status</th>
+                            <th>Genres</th>
+                            <th>Chapters</th>
+                            <th>Cover Image</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {followedComics.map((comic) => (
+                            <tr key={comic.id}>
+                                <td>{comic.id}</td>
+                                <td>{comic.title}</td>
+                                <td>{comic.description}</td>
+                                <td>{comic.viewCount}</td>
+                                <td>{comic.followCount}</td>
+                                <td>{comic.rating}</td>
+                                <td>{comic.status}</td>
+                                <td>
+                                    {comic.genres && comic.genres.length > 0 ? (
+                                        <ul>
+                                            {comic.genres.map((genre) => (
+                                                <li key={genre.id}>{genre.name}</li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        "No genres available"
+                                    )}
+                                </td>
+                                <td><a href={`chapter.html?comicId=${comic.id}`}>
+                                       list chpaters
+                                </a>
+                                </td>
+                                <td>
+                                    {comic.coverImage ? (
+                                        <img src={`/uploads/${comic.coverImage}`} alt={comic.coverImage} style={{ width: '100px', height: 'auto' }} />
+                                    ) : (
+                                        <p>No cover image available</p>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>No followed comics found.</p>
+                )}
+            </div>
+        );
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+
+    ReactDOM.render( <div>
+        <Menu />
+        <FollowedComics userId={userId} />
+    </div>
+
+        , document.getElementById('root'));
+
+
+</script>
+</body>
+</html>

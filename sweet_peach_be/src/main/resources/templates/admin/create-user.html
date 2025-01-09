@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create User</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    class CreateUser extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                username: '',
+                email: '',
+                password: '',
+                showPassword: false,
+                passwordError: '', // Thêm trạng thái mới
+            };
+        }
+
+        validatePassword = (password) => {
+            // Ít nhất 8 ký tự
+            if (password.length < 8) {
+                return 'Password must be at least 8 characters long.';
+            }
+            // Chứa ít nhất một chữ hoa
+            if (!/[A-Z]/.test(password)) {
+                return 'Password must contain at least one uppercase letter.';
+            }
+            // Chứa ít nhất một chữ thường
+            if (!/[a-z]/.test(password)) {
+                return 'Password must contain at least one lowercase letter.';
+            }
+            // Chứa ít nhất một số
+            if (!/\d/.test(password)) {
+                return 'Password must contain at least one number.';
+            }
+            return '';
+        };
+
+        handleChange = (event) => {
+            const { name, value } = event.target;
+            if (name === 'password') {
+                const error = this.validatePassword(value);
+                this.setState({ password: value, passwordError: error });
+            } else {
+                this.setState({ [name]: value });
+            }
+        };
+
+        handleCheckboxChange = () => {
+            this.setState((prevState) => ({
+                showPassword: !prevState.showPassword,
+            }));
+        };
+
+        handleSubmit = (event) => {
+            event.preventDefault();
+            const { username, email, password } = this.state;
+            // Gửi dữ liệu tới API để tạo mới người dùng
+            fetch('http://localhost:8080/api/users/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password,
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('User created successfully:', data);
+                    alert('User created successfully!');
+                    // Redirect hoặc thực hiện hành động sau khi tạo người dùng thành công
+                })
+                .catch((error) => {
+                    console.error('Error creating user:', error);
+                    alert('Error creating user. Please try again.');
+                });
+        };
+
+        render() {
+            const { username, email, password, showPassword, passwordError } = this.state;
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>Create User</h1>
+                    </div>
+                    <div className="content">
+                        <div className="form-container">
+                            <form id="create-user-form" onSubmit={this.handleSubmit}>
+                                <label htmlFor="username">Username:</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    name="username"
+                                    value={username}
+                                    onChange={this.handleChange}
+                                    required
+                                    style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ccc', borderRadius: '3px' }}
+                                />
+                                <br />
+                                <label htmlFor="email">Email:</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={email}
+                                    onChange={this.handleChange}
+                                    required
+                                    style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ccc', borderRadius: '3px' }}
+                                />
+                                <br />
+                                <label htmlFor="password">Password:</label>
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    id="password"
+                                    name="password"
+                                    value={password}
+                                    onChange={this.handleChange}
+                                    required
+                                    style={{ width: '100%', padding: '8px', marginBottom: '10px', border: passwordError ? '1px solid red' : '1px solid #ccc', borderRadius: '3px' }}
+                                />
+                                <br />
+                                {passwordError && <div style={{ color: 'red' }}>{passwordError}</div>}
+                                <br />
+                                <div>
+                                    <input
+                                        type="checkbox"
+                                        onChange={this.handleCheckboxChange}
+                                        style={{ verticalAlign: 'middle', marginRight: '5px' }}
+                                    />
+                                    <label style={{ verticalAlign: 'middle' }}> Show Password</label>
+                                </div>
+                                <br />
+                                <button type="submit" style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ccc', borderRadius: '3px' }}>Create User</button>
+                            </form>
+                        </div>
+                    </div>
+                    <a href="users.html" style={{ textDecoration: 'none', display: 'block', marginTop: '10px' }}>
+                        <i className="fas fa-arrow-left"></i> Back to Users
+                    </a>
+                </div>
+            );
+        }
+    }
+
+    ReactDOM.render(<div>
+        <Menu />
+        <CreateUser />
+    </div>
+
+        , document.getElementById('root'));
+</script>
+</body>
+</html>

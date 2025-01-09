@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Comic</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+<div id="error-message" style="color: red; font-weight: bold;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.8.6/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    class EditComic extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                comicId: null,
+                title: '',
+                description: '',
+                status: '',
+                coverImage: null,
+                genres: [],
+                selectedGenres: []
+            };
+        }
+
+        componentDidMount() {
+            const queryParams = new URLSearchParams(window.location.search);
+            const comicId = queryParams.get('id');
+            console.log('Comic ID:', comicId); // In ra để kiểm tra giá trị comicId
+            this.setState({ comicId });
+            this.fetchComic(comicId);
+            this.fetchGenres();
+        }
+
+        fetchComic = (comicId) => {
+            fetch(`http://localhost:8080/api/comics/${comicId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch comic');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const { title, description, status, coverImage, genres } = data;
+                    const selectedGenres = Array.isArray(genres) ? genres.map(genre => genre.id) : [];
+                    this.setState({ title, description, status, coverImage, selectedGenres });
+                })
+                .catch(error => {
+                    console.error('Error fetching comic:', error);
+                    // Hiển thị thông báo lỗi khi bộ truyện không được tìm thấy
+                    document.getElementById('error-message').innerText = 'Comic not found. Please check the comic ID.';
+                });
+        }
+
+        fetchGenres = () => {
+            fetch('http://localhost:8080/api/genres')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch genres');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.setState({ genres: data });
+                })
+                .catch(error => {
+                    console.error('Error fetching genres:', error);
+                });
+        }
+
+        handleInputChange = (event) => {
+            const { name, value } = event.target;
+            this.setState({ [name]: value });
+        }
+
+        handleCheckboxChange = (event) => {
+            const { value, checked } = event.target;
+            const { selectedGenres } = this.state;
+
+            let updatedGenres = [...selectedGenres];
+
+            if (checked) {
+                updatedGenres.push(parseInt(value));
+            } else {
+                updatedGenres = updatedGenres.filter(genreId => genreId !== parseInt(value));
+            }
+
+            this.setState({ selectedGenres: updatedGenres });
+        }
+
+        handleFileChange = (event) => {
+            const file = event.target.files[0];
+            this.setState({ coverImage: file });
+        }
+
+        handleFormSubmit = (event) => {
+            event.preventDefault();
+            const { comicId, title, description, status, coverImage, selectedGenres } = this.state;
+
+            const formData = new FormData();
+            formData.append('file', coverImage);
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('status', status);
+            formData.append('genres', selectedGenres); // Chỉ cần truyền mảng selectedGenres
+
+            fetch(`http://localhost:8080/api/comics/update/${comicId}`, {
+                method: 'PUT',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update comic');
+                    }
+                    alert('Comic updated successfully');
+                    // Redirect or do something after successful update
+
+                    // Chuyển hướng sau khi tạo truyện thành công
+                       window.location.href = 'comics.html';
+                })
+                .catch(error => {
+                    console.error('Error updating comic:', error);
+                    alert('Error updating comic. Please try again.');
+                });
+        }
+
+        render() {
+            const { title, description, status, coverImage, genres, selectedGenres } = this.state;
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>Edit Comic</h1>
+                    </div>
+                    <div className="content">
+                        <div className="form-container">
+                            <form id="edit-comic-form" encType="multipart/form-data" method="POST" onSubmit={this.handleFormSubmit}>
+                                <label htmlFor="title">Title:</label>
+                                <input type="text" id="title" name="title" value={title} onChange={this.handleInputChange} required /><br /><br />
+                                <label htmlFor="coverImage">Cover Image:</label>
+                                <input type="file" id="coverImage" name="file" onChange={this.handleFileChange} required /><br />
+                                {coverImage && coverImage instanceof File && (
+                                    <div>
+                                        <img src={URL.createObjectURL(coverImage)} alt="Cover Preview" style={{ maxWidth: "200px", maxHeight: "200px" }} />
+                                        <br />
+                                    </div>
+                                )}
+                                <br />
+                                <label htmlFor="description">Description:</label><br />
+                                <textarea id="description" name="description" value={description} onChange={this.handleInputChange} required></textarea><br /><br />
+                                <label htmlFor="status">Status:</label>
+                                <input type="text" id="status" name="status" value={status} onChange={this.handleInputChange} required /><br /><br />
+                                <label htmlFor="genres">Genres:</label><br />
+                                {genres.map((genre, index) => (
+                                    <div key={index}>
+                                        <input
+                                            type="checkbox"
+                                            id={`genre-${genre.id}`}
+                                            name="selectedGenres"
+                                            value={genre.id}
+                                            checked={selectedGenres.includes(genre.id)} // Kiểm tra xem genre có trong selectedGenres không
+                                            onChange={this.handleCheckboxChange}
+                                        />
+                                        <label htmlFor={`genre-${genre.id}`}>{genre.name}</label>
+                                    </div>
+                                ))}
+                                <button type="submit">Update Comic</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+    }
+
+    ReactDOM.render(
+        <div>
+            <Menu />
+            <EditComic />
+        </div>
+
+        , document.getElementById('root'));
+</script>
+</body>
+</html>

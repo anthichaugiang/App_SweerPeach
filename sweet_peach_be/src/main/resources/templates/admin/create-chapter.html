@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Chapter Page</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Your JavaScript file where you define the CreateChapter component -->
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    // Import React and useState
+    const { useState } = React;
+
+    function CreateChapter({ comicId }) {
+        const [chapterNumber, setChapterNumber] = useState('');
+        const [title, setTitle] = useState('');
+
+        const handleSubmit = async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData();
+            formData.append('comicId', comicId);
+            formData.append('chapterNumber', chapterNumber);
+            formData.append('title', title);
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/chapters/create/${comicId}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create chapter');
+                }
+
+                // Redirect to the page after creating the chapter
+                window.location.href = `chapter.html?comicId=${comicId}`;
+                alert('Chapter created successfully!')
+            } catch (error) {
+                console.error('Error creating chapter:', error);
+            }
+        };
+
+        return (
+            <div className="container">
+                <div className="header">
+                    <h1>Create New Chapter</h1>
+                </div>
+                <div className="content">
+                    <div className="form-container">
+                        <form encType="multipart/form-data" method="POST" onSubmit={handleSubmit}>
+                            <div>
+                                <label htmlFor="chapterNumber">Chapter Number:</label>
+                                <br/>
+                                <input
+                                    type="number"
+                                    id="chapterNumber"
+                                    name="chapterNumber"
+                                    value={chapterNumber}
+                                    onChange={(e) => setChapterNumber(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <br/>
+                            <div>
+                                <label htmlFor="title">Title:</label>
+                                <input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <button type="submit">Create Chapter</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Get the comicId from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const comicId = urlParams.get('comicId');
+
+    // Render the CreateChapter component with the comicId
+    ReactDOM.render(<div>
+            <Menu />
+        <CreateChapter comicId={comicId} />
+        </div>
+
+        , document.getElementById('root'));
+</script>
+
+</body>
+</html>

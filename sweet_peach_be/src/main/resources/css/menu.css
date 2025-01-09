@@ -1,0 +1,44 @@
+.menu {
+    display: flex;
+    justify-content: space-between; /* Đưa nút Logout sang bên phải */
+    background-color: #333;
+    padding: 10px 20px; /* Thêm padding cho menu */
+}
+
+.menu ul {
+    list-style-type: none;
+    display: flex;
+    padding: 0;
+    margin: 0;
+}
+
+.menu ul li {
+    margin-right: 10px;
+}
+
+.menu ul li:last-child {
+    margin-right: 0;
+}
+
+.menu ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.menu ul li a:hover {
+    background-color: #555;
+}
+
+.logout-btn {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: #007bff; /* Màu nền cho nút Logout */
+}
+
+.logout-btn:hover {
+    background-color: #0056b3; /* Màu nền hover cho nút Logout */
+}

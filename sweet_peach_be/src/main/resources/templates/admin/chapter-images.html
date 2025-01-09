@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter Images</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css"></head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    function ChapterImages({ chapterId }) {
+        const [chapterImages, setChapterImages] = React.useState([]);
+
+        // Function to handle delete image
+        const handleDeleteImage = (imageId) => {
+            if (window.confirm('Are you sure you want to delete this image?')) {
+                // Make DELETE request to delete the image
+                fetch(`http://localhost:8080/api/chapterImages/delete/${imageId}`, {
+                    method: 'DELETE',
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error('Failed to delete image');
+                        }
+                        // Remove the deleted image from the state
+                        setChapterImages((prevImages) => prevImages.filter((image) => image.id !== imageId));
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting image:', error);
+                    });
+            }
+        };
+
+        const handleCreateImage = () => {
+            window.location.href = `create-chapterImage.html?chapterId=${chapterId}`;
+        };
+
+        React.useEffect(() => {
+            fetch(`http://localhost:8080/api/chapterImages/chapter/${chapterId}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch chapter images');
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (!data || !Array.isArray(data)) {
+                        throw new Error('Invalid data format for chapter images');
+                    }
+                    console.log("Received Chapter Images:", data);
+                    setChapterImages(data);
+                })
+                .catch((error) => {
+                    console.error('Error fetching chapter images:', error);
+                });
+        }, [chapterId, setChapterImages]);
+
+        console.log("Chapter Images State:", chapterImages);
+
+        return (
+            <div>
+                <h2>Chapter Images</h2>
+                <button onClick={handleCreateImage} style={{ marginRight: '10px' }}>Create Image</button>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {chapterImages.map((image) => (
+                        <tr key={image.id}>
+                            <td>
+                                <img src={`/uploads/${image.imagePath}`} alt={`Chapter ${image.chapterId} Image`} />
+                            </td>
+                            <td>
+                                <button onClick={() => handleDeleteImage(image.id)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterId = urlParams.get('chapterId');
+
+   ReactDOM.render(  <div>
+           <Menu />
+           <ChapterImages chapterId={chapterId} />
+       </div>
+
+       , document.getElementById('root'));
+
+</script>
+</body>
+</html>

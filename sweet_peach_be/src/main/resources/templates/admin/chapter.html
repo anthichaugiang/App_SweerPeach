@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comic Chapters</title>
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+    <!-- Add any necessary CSS stylesheets -->
+    <style>
+        /* Add your CSS styles here */
+        /* Optional: Add CSS styles for the table, buttons, etc. */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        a {
+            text-decoration: none;
+            color: blue;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Your JavaScript file where you define the ComicChapters component -->
+<script type="text/babel" >
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    function ComicChapters({ comicId, comicTitle }) {
+        const [chapters, setChapters] = React.useState([]);
+
+        // Define fetchChapters outside useEffect so it can be accessed by other functions
+        const fetchChapters = async () => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/chapters/comic/${comicId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chapters');
+                }
+                const data = await response.json();
+                setChapters(data);
+            } catch (error) {
+                console.error('Error fetching chapters:', error);
+            }
+        };
+
+        React.useEffect(() => {
+            fetchChapters();
+        }, [comicId]);
+
+        const handleCreateChapter = async () => {
+            window.location.href = `create-chapter.html?comicId=${comicId}`;
+        };
+
+        const handleDeleteChapter = async (chapterId) => {
+            if (window.confirm('Are you sure you want to delete this chapter?')) {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/chapters/delete/${chapterId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to delete chapter');
+                    }
+                    // Refresh the list of chapters after deleting
+                    fetchChapters();
+                } catch (error) {
+                    console.error('Error deleting chapter:', error);
+                }
+            }
+        };
+
+        const handleEditChapter = (chapterId) => {
+            window.location.href = `edit-chapter.html?comicId=${comicId}&chapterId=${chapterId}`;
+        };
+
+        const handleViewChapterImages = (chapterId) => {
+            window.location.href = `chapter-images.html?chapterId=${chapterId}`;
+        };
+
+        if (chapters.length === 0) {
+            return <p>Loading chapters...</p>;
+        }
+
+        return (
+            <div>
+                <h1>{comicTitle} - Comic Chapters</h1>
+                <button onClick={handleCreateChapter}>Create Chapter</button>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Chapter Number</th>
+                        <th>Title</th>
+                        <th>View Count</th>
+                        <th>Update At</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {chapters.map((chapter) => (
+                        <tr key={chapter.id}>
+                            <td>{chapter.chapterNumber}</td>
+                            <td>
+                                <a href={`chapter-images.html?chapterId=${chapter.id}`} onClick={() => handleViewChapterImages(chapter.id)}>{chapter.title}</a>
+                            </td>
+                            <td>{chapter.viewCount}</td>
+                            <td>{chapter.updatedAt.toLocaleString()}</td>
+                            <td>
+                                <button onClick={() => handleEditChapter(chapter.id)}>Edit</button>
+                                <button onClick={() => handleDeleteChapter(chapter.id)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+
+    // Get the comicId and comicTitle from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const comicId = urlParams.get('comicId');
+    const comicTitle = urlParams.get('comicTitle');
+
+    // Render the ComicChapters component with the comicId and comicTitle
+    ReactDOM.render(  <div>
+            <Menu />
+            < ComicChapters comicId={comicId} comicTitle={comicTitle}/>
+
+        </div>
+          , document.getElementById('root'));
+
+</script>
+</body>
+</html>

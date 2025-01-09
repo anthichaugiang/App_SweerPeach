@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Genre</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.14.5/babel.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    const CreateGenre = () => {
+        const [name, setName] = React.useState('');
+
+        const handleSubmit = async (event) => {
+            event.preventDefault();
+
+            const genreName = event.target.name.value;
+            const newGenreData = { name: genreName };
+
+            try {
+                const response = await fetch('http://localhost:8080/api/genres/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newGenreData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create genre');
+                }
+
+                alert('Genre created successfully!');
+                window.location.href = 'genre.html';
+                // Redirect to another page or handle success
+            } catch (error) {
+                console.error('Error creating genre:', error);
+                alert('Failed to create genre. Please try again.');
+            }
+        };
+
+        const handleNameChange = (event) => {
+            setName(event.target.value);
+        };
+
+        return (
+            <div className="container">
+                <div className="header">
+                    <h1>Create Genre</h1>
+                </div>
+                <div className="content">
+                    <div className="form-container">
+                        <form className="create-genre-form" id="createGenreForm" onSubmit={handleSubmit}>
+                            <label htmlFor="name">Genre Name:</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={name}
+                                onChange={handleNameChange}
+                                required
+                            />
+                            <button type="submit">Create Genre</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.render(<div>
+        <Menu />
+        <CreateGenre />
+    </div>
+
+        , document.getElementById('root'));
+</script>
+
+</body>
+</html>

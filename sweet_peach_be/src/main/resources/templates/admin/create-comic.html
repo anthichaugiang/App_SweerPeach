@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo truyện tranh</title>
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/css/menu.css">
+</head>
+<body>
+<div id="root"></div>
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.14.5/babel.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/babel">
+    function Menu() {
+        return (
+            <div className="menu">
+                <ul>
+                    <li><a href="users.html">User</a></li>
+                    <li><a href="comics.html">Comics</a></li>
+                    <li><a href="genre.html">Genre</a></li>
+
+                </ul>
+                <a href="#" className="logout-btn">Logout</a>
+            </div>
+        );
+    }
+    const CreateComic = () => {
+        const [genres, setGenres] = React.useState([]);
+        const [selectedGenres, setSelectedGenres] = React.useState([]);
+        const [coverPreview, setCoverPreview] = React.useState(null);
+
+        React.useEffect(() => {
+            const loadGenres = async () => {
+                try {
+                    const response = await fetch('http://localhost:8080/api/genres');
+                    if (!response.ok) {
+                        throw new Error('Failed to load genres');
+                    }
+                    const data = await response.json();
+                    setGenres(data);
+                } catch (error) {
+                    console.error('Error loading genres:', error);
+                }
+            };
+
+            loadGenres();
+        }, []);
+
+        const handleChange = (event) => {
+            const genreId = event.target.id; // Lấy ID trực tiếp từ checkbox
+            const isChecked = event.target.checked;
+            console.log(genreId);
+            if (isChecked) {
+                console.log('Adding genre ID:', genreId);
+                setSelectedGenres((prevSelectedGenres) => [...prevSelectedGenres, genreId]);
+            } else {
+                console.log('Removing genre ID:', genreId);
+                setSelectedGenres((prevSelectedGenres) =>
+                    prevSelectedGenres.filter((id) => id !== genreId)
+                );
+            }
+        };
+
+        const handleImageChange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setCoverPreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const handleSubmit = async (event) => {
+            event.preventDefault();
+
+            console.log('Selected Genre IDs:', selectedGenres);
+
+            const formData = new FormData();
+            formData.append('title', event.target.elements.title.value);
+            formData.append('description', event.target.elements.description.value);
+            formData.append('status', event.target.elements.status.value);
+
+            // Gửi danh sách genre IDs trực tiếp, không cần JSON.stringify
+            selectedGenres.forEach(genreId => {
+                formData.append('genres', genreId);
+            });
+
+            formData.append('file', event.target.elements.file.files[0]);
+
+            const createComicUrl = 'http://localhost:8080/api/comics/create';
+
+            try {
+                const response = await fetch(createComicUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create comic');
+                }
+
+                alert('Comic created successfully!');
+                window.location.href = `comics.html`;
+
+                // Chuyển hướng sau khi tạo truyện thành công
+                window.location.href = 'comics.html';
+            } catch (error) {
+                console.error('Error creating comic:', error);
+            }
+        };
+
+
+        return (
+            <div className="container">
+                <div className="header">
+                    <h1>Create Comic</h1>
+                </div>
+                <div className="content">
+                    <div className="form-container">
+                        <form
+                            id="create-comic-form"
+                            encType="multipart/form-data"
+                            method="POST"
+                            onSubmit={handleSubmit}
+                        >
+                            <label htmlFor="title">Title:</label>
+                            <input type="text" id="title" name="title" required/><br/><br/>
+                            <label htmlFor="file">Cover Image:</label>
+                            <input
+                                type="file"
+                                id="file"
+                                name="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                required
+                            /><br/><br/>
+                            {coverPreview && (
+                                <img
+                                    id="coverPreview"
+                                    src={coverPreview}
+                                    alt="Cover Preview"
+                                    style={{maxWidth: '200px'}}
+                                />
+                            )}
+                            <label htmlFor="description">Description:</label><br/>
+                            <textarea id="description" name="description" required></textarea><br/><br/>
+                            <label htmlFor="status">Status:</label>
+                            <input type="text" id="status" name="status" required/><br/><br/>
+                            <label htmlFor="genres">Genres:</label><br/>
+                            {genres.map((genre) => (
+                                <div key={genre.id}>
+                                    <input
+                                        type="checkbox"
+                                        id={genre.id}
+                                        name="genres"
+                                        value={genre.id}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor={genre.id}>{genre.id}:{genre.name}</label>
+                                </div>
+                            ))}
+                            <br/>
+                            <button type="submit">Create Comic</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    ReactDOM.render(<div>
+        <Menu />
+        <CreateComic />
+    </div>
+
+        , document.getElementById("root"));
+
+</script>
+</body>
+</html>

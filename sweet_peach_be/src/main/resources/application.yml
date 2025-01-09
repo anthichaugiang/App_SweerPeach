@@ -1,0 +1,41 @@
+
+spring:
+
+  main:
+    allow-bean-definition-overriding: true
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+    enabled: true
+    mode: HTML
+  datasource:
+    url: jdbc:mysql://localhost:3306/sweet_peach?useSSL=false
+    username: root
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+      enabled: true
+      file-size-threshold: 2KB
+
+  mail:
+      host: live.smtp.mailtrap.io
+      port: 587
+      username: api
+      password: de8d52b743ba031d75edc6ef723a48e2
+      properties:
+        mail:
+          smtp:
+            auth: true
+            starttls:
+              enable: true
+
+server:
+
+  address: localhost
+  port: 8080
+
+jwt:
+  secret: mySecretKey
+  expiration: 2592000000

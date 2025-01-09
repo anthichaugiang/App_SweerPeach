@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Genres and Comics</title>
+  <link rel="stylesheet" type="text/css" href="/css/styles.css">
+  <link rel="stylesheet" type="text/css" href="/css/menu.css">
+  <style>
+    /* Style for genres container */
+    .genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px; /* Khoảng cách giữa các genre */
+    }
+
+    /* Style for each genre item */
+    .genre-item {
+      margin-right: 10px;
+    }
+
+    /* Style for comics table */
+    .comics-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    /* Style for comics table header */
+    .comics-table th {
+      border-bottom: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    /* Style for comics table rows */
+    .comics-table td {
+      border-bottom: 1px solid #eee;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React library -->
+<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.14.5/babel.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/babel">
+  function Menu() {
+    return (
+            <div className="menu">
+              <ul>
+                <li><a href="users.html">User</a></li>
+                <li><a href="comics.html">Comics</a></li>
+                <li><a href="genre.html">Genre</a></li>
+
+              </ul>
+              <a href="#" className="logout-btn">Logout</a>
+            </div>
+    );
+  }
+  const GenresAndComics = () => {
+    const [genres, setGenres] = React.useState([]);
+    const [selectedGenre, setSelectedGenre] = React.useState(null);
+    const [comics, setComics] = React.useState([]);
+    const [genresMap, setGenresMap] = React.useState({});
+
+    React.useEffect(() => {
+      const loadGenres = async () => {
+        try {
+          const response = await fetch('http://localhost:8080/api/genres');
+          if (!response.ok) {
+            throw new Error('Failed to load genres');
+          }
+          const data = await response.json();
+          setGenres(data);
+        } catch (error) {
+          console.error('Error loading genres:', error);
+        }
+      };
+
+      loadGenres();
+    }, []);
+
+    const renderChaptersButton = (comicId) => {
+      return (
+              <button onClick={() => window.location.href = `chapter.html?comicId=${comicId}`}>
+                List Chapters
+              </button>
+      );
+    };
+
+    // Fetch genres by comic ID
+    const fetchGenresByComicId = (comicId) => {
+      return fetch(`http://localhost:8080/api/comics/${comicId}/genres`)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Failed to fetch genres');
+                }
+                return response.json();
+              })
+              .catch(error => {
+                console.error('Error fetching genres:', error);
+                alert('Failed to fetch genres. Please try again later.');
+              });
+    };
+
+    // Hook useEffect để fetch genres khi có comics mới hoặc mỗi khi component được render lại
+    React.useEffect(() => {
+      const updateGenresMap = async () => {
+        const updatedGenresMap = {};
+        for (const comic of comics) {
+          try {
+            const genres = await fetchGenresByComicId(comic.id);
+            updatedGenresMap[comic.id] = genres;
+          } catch (error) {
+            console.error('Error fetching genres for comic ID', comic.id, error);
+          }
+        }
+        setGenresMap(updatedGenresMap);
+      };
+
+      updateGenresMap();
+    }, [comics]);
+
+    function GenreList({ genres }) {
+      if (!genres || genres.length === 0) {
+        return <p>No genres available</p>;
+      }
+
+      return (
+              <ul>
+                {genres.map(genre => (
+                        <li key={genre.id}>{genre.name}</li>
+                ))}
+              </ul>
+      );
+    }
+
+    const handleGenreChange = async (event) => {
+      const genreId = event.target.value;
+      setSelectedGenre(genreId);
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/comics/genre1/${genreId}`);
+        if (!response.ok) {
+          throw new Error('Failed to load comics');
+        }
+        const data = await response.json();
+        setComics(data);
+      } catch (error) {
+        console.error('Error loading comics:', error);
+      }
+    };
+
+    // Function to create a new genre
+    const createGenre = async () => {
+      window.location.href = 'create-genre.html';
+    };
+
+    // Function to edit a genre
+    const editGenre = async (genreId) => {
+      window.location.href = `edit-genre.html?id=${genreId}`;
+    };
+
+
+    // Function to delete a genre
+    const deleteGenre = async (genreId) => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/genres/delete/${genreId}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete genre');
+        }
+        // Reload genres after deletion
+        loadGenres();
+      } catch (error) {
+        console.error('Error deleting genre:', error);
+      }
+    };
+
+    const loadGenres = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/genres');
+        if (!response.ok) {
+          throw new Error('Failed to load genres');
+        }
+        const data = await response.json();
+        setGenres(data);
+      } catch (error) {
+        console.error('Error loading genres:', error);
+      }
+    };
+
+    const handleDeleteGenre = (genreId) => {
+      if (window.confirm('Bạn có chắc chắn muốn xóa genre này không?')) {
+        deleteGenre(genreId);
+      }
+    };
+
+    return (
+            <div className="container">
+              <div className="header">
+                <h1>Genres and Comics</h1>
+              </div>
+              <button onClick={createGenre}>Create Genre</button>
+              <div className="content">
+                <div className="genres">
+                  {genres.map((genre) => (
+                          <div key={genre.id} className="genre-item">
+                            <input
+                                    type="radio"
+                                    id={genre.id}
+                                    name="genre"
+                                    value={genre.id}
+                                    checked={selectedGenre === genre.id}
+                                    onChange={handleGenreChange}
+                            />
+                            <label htmlFor={genre.id}>{genre.name}</label>
+                            <button onClick={() => editGenre(genre.id)}>Edit Genre</button>
+                            <button onClick={() => handleDeleteGenre(genre.id)}>Delete Genre</button>
+                          </div>
+                  ))}
+
+                </div>
+                <div className="comics">
+                  <h2>Comics</h2>
+                  <table className="comics-table">
+                    <thead>
+                    <tr>
+                      <th>Cover Image</th>
+                      <th>Title</th>
+                      <th>Description</th>
+                      <th>Status</th>
+                      <th>Genres</th>
+                      <th>List Chapters</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {comics.map(comic => (
+                            <tr key={comic.id}>
+                              <td>
+                                <img src={`/uploads/${comic.coverImage}`} width="100" height="100" alt="Comic Cover Image" />
+                              </td>
+                              <td>{comic.title}</td>
+                              <td>{comic.description}</td>
+                              <td>{comic.status}</td>
+                              <td>
+                                {/* Truyền danh sách genres của comic vào GenreList */}
+                                <GenreList genres={genresMap[comic.id]} />
+                              </td>
+                              <td>
+                                {renderChaptersButton(comic.id)}
+                              </td>
+                            </tr>
+                    ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+    );
+  };
+
+  ReactDOM.render(
+          <div>
+            <Menu />
+            <GenresAndComics />
+          </div>
+         , document.getElementById("root"));
+
+</script>
+</body>
+</html>

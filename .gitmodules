@@ -1,0 +1,8 @@
+[submodule "sweet_peach_be"]
+	path = sweet_peach_be
+	url = https://github.com/phenol10193/sem4
+	branch = Thgiang
+[submodule "sweet_peach_fe"]
+	path = sweet_peach_fe
+	url = https://github.com/Hieuhp21/fe_pro4
+	branch = master
